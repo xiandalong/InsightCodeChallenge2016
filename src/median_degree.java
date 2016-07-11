@@ -10,6 +10,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import org.jgrapht.*;
+import org.jgrapht.graph.*;
+
 class Transaction{
     String actor;
     String target;
@@ -41,10 +44,11 @@ class TransactionComparator implements Comparator<Transaction>{
 
 public class median_degree{
     public static void main(String[] args) {
-        PriorityQueue<Transaction> pq = new PriorityQueue<>(10, new TransactionComparator());
+        PriorityQueue<Transaction> pq = new PriorityQueue<>(0, new TransactionComparator());
         JSONParser parser = new JSONParser();
         LocalDateTime maxTimeStamp = null;
         int lastMedianDegree = 0;
+        UndirectedGraph<String, DefaultEdge> g = null;
 
         // temporary variables for parsing Json objects and Transactions
         Object obj = null;
@@ -88,6 +92,12 @@ public class median_degree{
                     }
 
                     //Construct the graph with the transactions in the last 60 seconds
+                    g = new SimpleGraph<String, DefaultEdge>(DefaultEdge.class);
+                    for(Transaction t: pq){
+                        g.addVertex(t.actor);
+                        g.addVertex(t.target);
+                        g.addEdge(t.actor,t.target);
+                    }
 
                     // output median degree to output.txt
 
@@ -106,7 +116,7 @@ public class median_degree{
             e.printStackTrace();
         }
 
-        //
+
 
 
     }
