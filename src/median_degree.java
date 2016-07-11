@@ -3,6 +3,7 @@
 import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
@@ -44,10 +45,11 @@ class TransactionComparator implements Comparator<Transaction>{
 
 public class median_degree{
     public static void main(String[] args) {
-        PriorityQueue<Transaction> pq = new PriorityQueue<>(0, new TransactionComparator());
+        PriorityQueue<Transaction> pq = new PriorityQueue<>(1, new TransactionComparator());
+        System.out.println(pq.size());
         JSONParser parser = new JSONParser();
         LocalDateTime maxTimeStamp = null;
-        int lastMedianDegree = 0;
+        double medianDegree = 0.00;
         UndirectedGraph<String, DefaultEdge> g = null;
 
         // temporary variables for parsing Json objects and Transactions
@@ -58,10 +60,10 @@ public class median_degree{
             File fin = new File(".\\venmo_input\\venmo-trans.txt");
             File fout = new File(".\\venmo_output\\output.txt");
             BufferedReader br = new BufferedReader(new FileReader(fin));
-            BufferedWriter output = new BufferedWriter(new FileWriter(fout));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(fout));
 
             String line = null;
-            while ((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null && line.length()!=0) {
                 obj = parser.parse(line);
                 JSONObject jsonObject = (JSONObject) obj;
                 trans = new Transaction(jsonObject);
@@ -86,8 +88,9 @@ public class median_degree{
                         else if(maxTimeStamp.minusSeconds(60).isBefore(trans.created_time)) pq.add(trans);
                         // if the new transaction is before 60 sec from the max timestamp
                         else{
-                            output.write(lastMedianDegree+"\n");
                             // add the last median degree to the result file
+                            bw.write(String.format("%.2f",medianDegree)+"\n");
+                            continue;
                         }
                     }
 
@@ -99,24 +102,33 @@ public class median_degree{
                         g.addEdge(t.actor,t.target);
                     }
 
-                    // output median degree to output.txt
+                    // calculate the median degree
+                    int[] degrees = new int[g.vertexSet().size()];
+                    int i=0;
+                    for(String vertex: g.vertexSet()){
+                        degrees[i] = g.degreeOf(vertex);
+                        i++;
+                    }
+                    Arrays.sort(degrees);
+                    int n = degrees.length;
+                    if(n%2==0) medianDegree = ( degrees[n/2-1] + degrees[n/2])/2.0;
+                    else medianDegree = degrees[n/2];
 
+                    // output median degree to output.txt
+                    bw.write(String.format("%.2f",medianDegree)+"\n");
 
 
                 }
 
-
-
             }
 
             br.close();
+            bw.close();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
-
 
 
     }
