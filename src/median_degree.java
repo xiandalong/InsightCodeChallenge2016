@@ -14,11 +14,13 @@ import org.json.simple.parser.ParseException;
 import org.jgrapht.*;
 import org.jgrapht.graph.*;
 
+// Define a Transaction class for each Transaction
 class Transaction{
     String actor;
     String target;
     LocalDateTime created_time;
 
+    // constructor takes JSON object as input
     public Transaction(JSONObject object) {
         this.actor = object.get("actor").toString();
         this.target = object.get("target").toString();
@@ -28,11 +30,13 @@ class Transaction{
         this.created_time = LocalDateTime.parse(str, formatter);
     }
 
+    // method to check if current transaction is valid
     public boolean isValid(){
         return this.actor!=null && this.target!=null && this.created_time!=null;
     }
 }
 
+// Define comparator for auto-sorting transactions in priority queue
 class TransactionComparator implements Comparator<Transaction>{
     @Override
     public int compare(Transaction o1, Transaction o2) {
@@ -57,8 +61,9 @@ public class median_degree{
         Transaction trans = null;
         try {
             // Read lines from the input file
-            File fin = new File(".\\venmo_input\\venmo-trans.txt");
-            File fout = new File(".\\venmo_output\\output.txt");
+//            File fin = new File(".\\venmo_input\\venmo-trans.txt");
+            File fin = new File(args[0]);
+            File fout = new File(args[1]);
             BufferedReader br = new BufferedReader(new FileReader(fin));
             BufferedWriter bw = new BufferedWriter(new FileWriter(fout));
 
@@ -67,7 +72,7 @@ public class median_degree{
                 obj = parser.parse(line);
                 JSONObject jsonObject = (JSONObject) obj;
                 trans = new Transaction(jsonObject);
-                System.out.println("The transaction is from"+trans.actor+" to "+trans.target + " at " + trans.created_time.toString());
+                System.out.println("The transaction is from "+trans.actor+" to "+trans.target + " at " + trans.created_time.toString());
 
                 // if the transaction is valid, proceed to updating the priority queue of transactions
                 if(trans.isValid()){
@@ -78,7 +83,7 @@ public class median_degree{
                     else{
                         // if the new transaction is the latest one
                         if(maxTimeStamp.isBefore(trans.created_time)){
-                            while(pq.peek().created_time.isBefore(trans.created_time.minusSeconds(60))){
+                            while(!pq.isEmpty()&& pq.peek().created_time.isBefore(trans.created_time.minusSeconds(60))){
                                 pq.poll();
                             }
                             pq.add(trans);
@@ -88,7 +93,7 @@ public class median_degree{
                         else if(maxTimeStamp.minusSeconds(60).isBefore(trans.created_time)) pq.add(trans);
                         // if the new transaction is before 60 sec from the max timestamp
                         else{
-                            // add the last median degree to the result file
+                            // add the last seen median degree to the result file
                             bw.write(String.format("%.2f",medianDegree)+"\n");
                             continue;
                         }
